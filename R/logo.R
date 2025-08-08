@@ -63,10 +63,10 @@ logo <- function(position = "bottom-right",
     pkg_dir <- system.file(package = "arpctheme")
     if (pkg_dir != "") {
       # Package is installed
-      logo_path <- system.file("Logo", "arpc_logo.pdf", package = "arpctheme")
+      logo_path <- system.file("logo", "arpc_logo.pdf", package = "arpctheme")
     } else {
       # Development mode - look in current directory structure
-      logo_path <- file.path("Logo", "arpc_logo.pdf")
+      logo_path <- file.path("logo", "arpc_logo.pdf")
     }
   } else {
     logo_path <- path

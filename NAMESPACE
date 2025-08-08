@@ -2,6 +2,9 @@
 
 export(export_arpc)
 export(logo)
+export(ndsu_colors)
+export(scale_color_ndsu)
+export(scale_fill_ndsu)
 export(theme_arpc)
 import(ggplot2)
 importFrom(grDevices,dev.off)

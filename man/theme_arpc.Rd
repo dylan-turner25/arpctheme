@@ -2,7 +2,7 @@
 % Please edit documentation in R/arpc_theme.R
 \name{theme_arpc}
 \alias{theme_arpc}
-\title{ARPC ggplot2 Theme}
+\title{ARPC ggplot2 Theme with NDSU Colors}
 \usage{
 theme_arpc(
   base_size = 11,
@@ -21,22 +21,29 @@ theme_arpc(
 \item{base_rect_size}{Base rectangle size (default: base_size/22)}
 }
 \value{
-A ggplot2 theme object
+A list of ggplot2 components including theme styling and NDSU color scales
 }
 \description{
 A clean, minimal ggplot2 theme designed for ARPC data visualizations.
-This theme provides consistent styling with professional appearance.
+This theme provides consistent styling with professional appearance and
+automatically applies NDSU brand colors to plots.
 }
 \examples{
 library(ggplot2)
-# Basic theme
-ggplot(mtcars, aes(x = wt, y = mpg)) +
+# Basic theme with automatic NDSU colors
+ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl))) +
   geom_point() +
   theme_arpc()
   
-# Theme with logo
-ggplot(mtcars, aes(x = wt, y = mpg)) +
+# Theme with logo and NDSU colors
+ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl))) +
   geom_point() +
   theme_arpc() +
   logo()
+  
+# Override colors if needed
+ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl))) +
+  geom_point() +
+  theme_arpc() +
+  scale_color_manual(values = c("red", "blue", "green"))
 }
