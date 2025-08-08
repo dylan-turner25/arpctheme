@@ -13,16 +13,19 @@ standardized formatting.
 
 ## Installation
 
-You can install the development version of arpctheme from GitHub with:
+You can install the arpctheme from GitHub as follows:
 
 ``` r
-# install.packages("pak")
-pak::pak("dylan-turner25/arpctheme")
+# install the remotes package if its not already installed
+install.packages("remotes")
+
+# use remotes package to install the arpctheme package from GitHub
+remotes::install_github("dylan-turner25/arpctheme")
 ```
 
 ## Quick Start
 
-Below is a standard ggplot scatter plot with out the arpc theme applied.
+Below is a standard ggplot scatter plot without the ARPC theme applied.
 
 ``` r
 library(ggplot2)
