@@ -6,10 +6,10 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-The `arpctheme` package provides a comprehensive ggplot2 theme and color
-system designed specifically for ARPC (Agricultural Research and Policy
-Center) data visualizations. It ensures consistent, professional styling
-that incorporates NDSU brand colors and typography.
+The `arpctheme` package provides a ggplot2 theme designed specifically
+for ARPC data visualizations. The package also contains an export
+function that allows users to consistently export figures in a
+standardized formatting.
 
 ## Installation
 
@@ -68,7 +68,9 @@ specific location using coordinates, where (0,0) is the bottom left
 corner of the plot and (1,1) is the top right corner. Setting
 coordinates outside the 0 to 1 range is also possible and will place the
 logo into the margins of the plot. The size of the logo can be adjusted
-using the `size` argument, which defaults to 0.3.
+using the `size` argument, which defaults to 0.3. The `alpha` argument
+can be used to adjust the transparency of the logo to create a watermark
+type effect.
 
 ``` r
 
@@ -101,55 +103,25 @@ ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl))) +
 
 <img src="man/figures/README-example-logo2-1.png" width="100%" />
 
-## NDSU Color System
-
-The package automatically applies NDSU brand colors in priority order:
-
-1.  **NDSU Green** (#00583d) - Primary brand color
-2.  **NDSU Yellow** (#FFC425) - Secondary brand color  
-3.  **Rust** (#B83E27) - Third priority
-4.  **Night** (#0F374B) - Fourth priority
-5.  Additional colors: Teal, Sage, Dark Green, etc.
-
-### Access Individual Colors
-
-``` r
-# Get all NDSU colors
-ndsu_colors()
-#>        green       yellow   dark_green   lime_green         teal lemon_yellow 
-#>    "#00583d"    "#FFC425"    "#003524"    "#8ED73B"    "#51ABD0"    "#F4F287" 
-#>         sage    pale_sage         rust  morning_sky        night 
-#>    "#8ABD78"    "#D7E8C8"    "#B83E27"     "#90DF7"    "#0F374B"
-
-# Get specific colors
-ndsu_colors("green")
-#>     green 
-#> "#00583d"
-ndsu_colors(c("green", "yellow", "rust"))
-#>     green    yellow      rust 
-#> "#00583d" "#FFC425" "#B83E27"
-```
-
-## Examples
-
-### Time Series Plot
+Example: Use the logo as a watermark in the background of the plot.
 
 ``` r
 # some made up data
 crop_data <- data.frame(
-  year = rep(2020:2024, 3),
+  year = rep(2020:2024, 4),
   yield = c(85, 88, 92, 89, 94,   # Corn
            45, 48, 52, 50, 55,    # Soybeans  
-           65, 68, 71, 69, 75),   # Wheat
+           65, 68, 71, 69, 75, # Wheat
+           50,50,50,75,90),   # Rice
       
-  crop = rep(c("Corn", "Soybeans", "Wheat"), each = 5)
+  crop = rep(c("Corn", "Soybeans", "Wheat","Rice"), each = 5)
 )
 
 ggplot(crop_data, aes(x = year, y = yield, color = crop)) +
   geom_line(linewidth = 1.2) +
   geom_point(size = 2.5) +
   theme_arpc() +
-  logo(position = c(.5,.5), size = 1, alpha = .3) +
+  logo(position = c(.5,.7), size = 1, alpha = .2) +
   labs(
     title = "Made Up Crop Yields Over Time",
     subtitle = "",
@@ -161,69 +133,34 @@ ggplot(crop_data, aes(x = year, y = yield, color = crop)) +
 
 <img src="man/figures/README-timeseries-example-1.png" width="100%" />
 
-### Bar Chart
+## NDSU Color Pallete
+
+The package automatically applies colors from the [NDSU brand
+guidlines](https://www.ndsu.edu/sites/default/files/fileadmin/www.ur.ndsu.edu/NDSU-Brand-Guidelines-040125.pdf):
+
+1.  **NDSU Green** (#00583d) - Primary brand color
+2.  **NDSU Yellow** (#FFC425) - Secondary brand color  
+3.  **Rust** (#B83E27) - Third priority
+4.  **Night** (#0F374B) - Fourth priority
+5.  Additional colors: Teal, Sage, Dark Green, etc.
+
+### Access Individual Colors
 
 ``` r
-ggplot(mtcars, aes(x = factor(cyl), fill = factor(cyl))) +
-  geom_bar() +
-  theme_arpc() +
-  logo(position = "bottom-right", size = 0.5) +
-  labs(
-    title = "Distribution by Cylinder Count",
-    x = "Cylinders",
-    y = "Count",
-    fill = "Cylinders"
-  )
+# return the hex codes for all ndsu colors
+ndsu_colors()
+#>        green       yellow   dark_green   lime_green         teal lemon_yellow 
+#>    "#00583d"    "#FFC425"    "#003524"    "#8ED73B"    "#51ABD0"    "#F4F287" 
+#>         sage    pale_sage         rust  morning_sky        night 
+#>    "#8ABD78"    "#D7E8C8"    "#B83E27"     "#90DF7"    "#0F374B"
+
+# get the hex code for just ndsu green
+ndsu_colors("green")
+#>     green 
+#> "#00583d"
+
+# get the hex codes for ndsu green and ndsu yellow
+ndsu_colors(c("green", "yellow"))
+#>     green    yellow 
+#> "#00583d" "#FFC425"
 ```
-
-<img src="man/figures/README-barchart-example-1.png" width="100%" />
-
-## Customization
-
-### Override Colors
-
-Users can override the automatic NDSU colors when needed:
-
-``` r
-ggplot(data, aes(x, y, color = group)) +
-  geom_point() +
-  theme_arpc() +
-  scale_color_manual(values = c("red", "blue", "green"))  # Overrides NDSU colors
-```
-
-### Font Customization
-
-``` r
-# Use different font family
-ggplot(data, aes(x, y)) +
-  geom_point() +
-  theme_arpc(base_family = "Arial")
-
-# Adjust font size
-ggplot(data, aes(x, y)) +
-  geom_point() +
-  theme_arpc(base_size = 16)
-```
-
-## Best Practices
-
-1.  **Consistent Usage**: Always use `theme_arpc()` for ARPC
-    publications to ensure brand consistency
-2.  **Logo Placement**: Choose logo positions that don’t interfere with
-    data visualization (automatic clipping ensures logos appear
-    correctly)
-3.  **Color Priority**: Let the automatic color system handle color
-    assignment for consistency
-4.  **Export Standards**: Use `export_arpc()` with consistent dimensions
-    for publication-ready figures
-5.  **Font Considerations**: The default CMR font works well for
-    academic publications
-
-## Contributing
-
-This package is designed specifically for ARPC research visualization
-needs. For issues or suggestions, please contact the package maintainer.
-
-## License
-
-MIT License - see LICENSE file for details.

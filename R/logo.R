@@ -255,6 +255,21 @@ create_logo_grob <- function(logo_path, coords, alpha) {
         # Read PNG file directly
         img_raster <- png::readPNG(logo_path)
         
+        # Apply alpha transparency to the image data
+        if (length(dim(img_raster)) == 3) {
+          # Check if image has alpha channel (4th dimension)
+          if (dim(img_raster)[3] == 4) {
+            # RGBA image - multiply existing alpha channel by our alpha parameter
+            img_raster[,,4] <- img_raster[,,4] * alpha
+          } else if (dim(img_raster)[3] == 3) {
+            # RGB image - add alpha channel
+            img_rgba <- array(dim = c(dim(img_raster)[1], dim(img_raster)[2], 4))
+            img_rgba[,,1:3] <- img_raster[,,1:3]  # Copy RGB channels
+            img_rgba[,,4] <- alpha  # Set alpha channel
+            img_raster <- img_rgba
+          }
+        }
+        
         # Create raster grob from the actual logo
         logo_element <- grid::rasterGrob(
           image = img_raster,
