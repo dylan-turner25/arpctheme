@@ -3,8 +3,10 @@
 #' Adds the ARPC logo to a ggplot object. This function returns a ggplot2 layer
 #' that can be added to any ggplot using the + operator.
 #'
-#' @param position Character, position of logo. Options: "bottom-right", "bottom-left", 
-#'   "top-right", "top-left", "bottom", "top", "left", "right" (default: "bottom-right")
+#' @param position Character or numeric vector, position of logo. 
+#'   Character options: "bottom-right", "bottom-left", "top-right", "top-left", 
+#'   "bottom", "top", "left", "right" (default: "bottom-right"). 
+#'   Numeric option: c(x, y) coordinates where x and y are in plot units
 #' @param size Numeric, size of logo as proportion of plot area (default: 0.1)
 #' @param path Character, path to logo file. If NULL, uses package default logo (default: NULL)
 #' @param alpha Numeric, transparency of logo (0 = transparent, 1 = opaque) (default: 0.8)
@@ -35,6 +37,12 @@
 #'   geom_point() +
 #'   theme_arpc() +
 #'   logo(position = "top-right", size = 0.15, alpha = 0.6)
+#'   
+#' # Use custom x,y coordinates for precise positioning
+#' ggplot(mtcars, aes(x = wt, y = mpg)) +
+#'   geom_point() +
+#'   theme_arpc() +
+#'   logo(position = c(3, 25), size = 0.12)
 logo <- function(position = "bottom-right", 
                  size = 0.1, 
                  path = NULL, 
@@ -43,8 +51,25 @@ logo <- function(position = "bottom-right",
   # Validate position
   valid_positions <- c("bottom-right", "bottom-left", "top-right", "top-left", 
                       "bottom", "top", "left", "right")
-  if (!position %in% valid_positions) {
-    stop("position must be one of: ", paste(valid_positions, collapse = ", "))
+  
+  if (is.character(position)) {
+    # String position validation
+    if (!position %in% valid_positions) {
+      stop("position must be one of: ", paste(valid_positions, collapse = ", "), 
+           " or a numeric vector of length 2 with x,y coordinates")
+    }
+  } else if (is.numeric(position)) {
+    # Numeric position validation
+    if (length(position) != 2) {
+      stop("numeric position must be a vector of length 2 (x, y coordinates)")
+    }
+    if (any(!is.finite(position))) {
+      stop("position coordinates must be finite numbers")
+    }
+  } else {
+    stop("position must be either a character string (", 
+         paste(valid_positions, collapse = ", "), 
+         ") or a numeric vector of length 2 with x,y coordinates")
   }
   
   # Validate size
@@ -59,14 +84,14 @@ logo <- function(position = "bottom-right",
   
   # Determine logo path
   if (is.null(path)) {
-    # Try to find package logo
+    # Try to find package logo in inst directory
     pkg_dir <- system.file(package = "arpctheme")
     if (pkg_dir != "") {
-      # Package is installed
-      logo_path <- system.file("logo", "arpc_logo.pdf", package = "arpctheme")
+      # Package is installed - logo is in inst directory
+      logo_path <- system.file("arpc_logo.pdf", package = "arpctheme")
     } else {
-      # Development mode - look in current directory structure
-      logo_path <- file.path("logo", "arpc_logo.pdf")
+      # Development mode - look in inst directory
+      logo_path <- file.path("inst", "arpc_logo.pdf")
     }
   } else {
     logo_path <- path
@@ -102,7 +127,7 @@ logo <- function(position = "bottom-right",
 #' Internal helper function to calculate logo placement coordinates
 #' based on position and size parameters, preserving aspect ratio.
 #'
-#' @param position Character, logo position
+#' @param position Character or numeric vector, logo position
 #' @param size Numeric, logo size as proportion
 #' @param logo_path Character, path to logo file for aspect ratio calculation
 #' @return List with xmin, xmax, ymin, ymax coordinates
@@ -110,17 +135,26 @@ logo <- function(position = "bottom-right",
 #' @importFrom magick image_read image_info
 calculate_logo_coordinates <- function(position, size, logo_path = NULL) {
   
-  # Base coordinates for each position (as proportion of plot area)
-  base_coords <- switch(position,
-    "bottom-right" = list(x = 0.85, y = 0.08),
-    "bottom-left" = list(x = 0.15, y = 0.08),
-    "top-right" = list(x = 0.85, y = 0.92),
-    "top-left" = list(x = 0.15, y = 0.92),
-    "bottom" = list(x = 0.5, y = 0.08),
-    "top" = list(x = 0.5, y = 0.92),
-    "left" = list(x = 0.15, y = 0.5),
-    "right" = list(x = 0.85, y = 0.5)
-  )
+  # Determine base coordinates
+  if (is.character(position)) {
+    # Use predefined string positions
+    base_coords <- switch(position,
+      "bottom-right" = list(x = 0.85, y = 0.08),
+      "bottom-left" = list(x = 0.15, y = 0.08),
+      "top-right" = list(x = 0.85, y = 0.92),
+      "top-left" = list(x = 0.15, y = 0.92),
+      "bottom" = list(x = 0.5, y = 0.08),
+      "top" = list(x = 0.5, y = 0.92),
+      "left" = list(x = 0.15, y = 0.5),
+      "right" = list(x = 0.85, y = 0.5)
+    )
+  } else if (is.numeric(position) && length(position) == 2) {
+    # Use custom x,y coordinates
+    base_coords <- list(x = position[1], y = position[2])
+  } else {
+    # Fallback to bottom-right if something goes wrong
+    base_coords <- list(x = 0.85, y = 0.08)
+  }
   
   # Get logo aspect ratio if file exists
   aspect_ratio <- 1  # Default to square

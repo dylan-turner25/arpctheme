@@ -87,6 +87,9 @@ Add the ARPC logo to your plots with flexible positioning:
 
 # Available positions: "bottom-right", "bottom-left", "top-right", 
 # "top-left", "bottom", "top", "left", "right"
+
+# Custom coordinates for precise positioning
++ logo(position = c(1.5, 25), size = 0.12)
 ```
 
 ### `export_arpc()`
@@ -198,7 +201,7 @@ ggplot(crop_data, aes(x = year, y = yield, color = crop)) +
 ggplot(mtcars, aes(x = factor(cyl), fill = factor(cyl))) +
   geom_bar() +
   theme_arpc() +
-  logo(position = "top-left", size = 0.08) +
+  logo(position = "top-right", size = 0.5) +
   labs(
     title = "Distribution by Cylinder Count",
     x = "Cylinders",

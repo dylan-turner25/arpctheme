@@ -5,13 +5,14 @@
 #' automatically applies NDSU brand colors to plots.
 #'
 #' @param base_size Base font size (default: 11)
-#' @param base_family Base font family (default: "cmr")
+#' @param base_family Base font family (default: Computer Modern Roman via extrafont)
 #' @param base_line_size Base line size (default: base_size/22)
 #' @param base_rect_size Base rectangle size (default: base_size/22)
 #'
 #' @return A list of ggplot2 components including theme styling and NDSU color scales
 #' @export
 #' @import ggplot2
+#' @importFrom extrafont loadfonts fonts
 #'
 #' @examples
 #' library(ggplot2)
@@ -32,9 +33,14 @@
 #'   theme_arpc() +
 #'   scale_color_manual(values = c("red", "blue", "green"))
 theme_arpc <- function(base_size = 11, 
-                       base_family = "cmr",
+                       base_family = NULL,
                        base_line_size = base_size / 22,
                        base_rect_size = base_size / 22) {
+  
+  # Automatic Computer Modern font detection and loading
+  if (is.null(base_family)) {
+    base_family <- get_computer_modern_font()
+  }
   
   # Create the base theme
   base_theme <- theme_minimal(base_size = base_size,
@@ -92,4 +98,43 @@ theme_arpc <- function(base_size = 11,
     scale_color_ndsu(),
     scale_fill_ndsu()
   )
+}
+
+#' Get Computer Modern Font
+#'
+#' Internal helper function to detect and load Computer Modern fonts
+#' using the extrafont package. Falls back gracefully to serif if
+#' Computer Modern is not available.
+#'
+#' @return Character string of the best available font family
+#' @keywords internal
+#' @importFrom extrafont loadfonts fonts
+get_computer_modern_font <- function() {
+  
+  # Try to load fonts silently
+  tryCatch({
+    suppressMessages(extrafont::loadfonts(quiet = TRUE))
+  }, error = function(e) {
+    # If loading fails, continue with fallback
+  })
+  
+  # Get list of available fonts
+  available_fonts <- tryCatch({
+    extrafont::fonts()
+  }, error = function(e) {
+    character(0)
+  })
+  
+  # Common Computer Modern font names to try
+  cm_fonts <- c("CM Roman", "Computer Modern", "CMU Serif", "Latin Modern Roman", "TeX Gyre Termes")
+  
+  # Check for Computer Modern variants
+  for (font in cm_fonts) {
+    if (font %in% available_fonts) {
+      return(font)
+    }
+  }
+  
+  # Fallback to serif (universally available)
+  return("serif")
 }
