@@ -1,0 +1,23 @@
+Package: arpctheme
+Title: ARPC Theme and Figure Export Functions
+Version: 0.1.0
+Authors@R: 
+    person("Dylan", "Turner", , "dylan@example.com", role = c("aut", "cre"))
+Description: Provides a consistent ggplot2 theme and standardized figure export 
+    functionality for ARPC data visualization needs.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Imports: 
+    ggplot2,
+    grDevices,
+    grid,
+    magick
+Suggests: 
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+
