@@ -17,34 +17,20 @@ You can install the development version of arpctheme from GitHub with:
 
 ``` r
 # install.packages("pak")
-pak::pak("dylan-turner25/ARPC-Theme")
+pak::pak("dylan-turner25/arpctheme")
 ```
-
-## Features
-
-- **Professional Theme**: Clean, minimal ggplot2 theme with Computer
-  Modern Roman typography
-- **NDSU Brand Colors**: Automatic application of official NDSU color
-  palette
-- **Logo Integration**: Easy addition of ARPC logo with automatic
-  clipping and smart positioning
-- **Export Functions**: Standardized figure export with consistent
-  formatting
-- **Color Priority System**: Intelligent color assignment (Green →
-  Yellow → Rust → Night)
 
 ## Quick Start
 
+Below is a standard ggplot scatter plot with out the arpc theme applied.
+
 ``` r
-library(arpctheme)
 library(ggplot2)
 
-# Basic usage - theme with automatic NDSU colors and logo
+# Basic usage a standard ggplot
 ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl))) +
   geom_point(size = 2) +
-  theme_arpc() +
-  logo() +  # Automatic clipping and positioning
-  labs(title = "ARPC Theme with Automatic NDSU Colors",
+  labs(title = "A standard ggplot",
        x = "Weight (1000 lbs)", 
        y = "Miles per Gallon",
        color = "Cylinders")
@@ -52,64 +38,68 @@ ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl))) +
 
 <img src="man/figures/README-example-1.png" width="100%" />
 
-## Main Functions
-
-### `theme_arpc()`
-
-The core theme function that provides: - Professional typography using
-Computer Modern Roman font - Automatic NDSU color scales for both color
-and fill aesthetics - Clean, minimal styling optimized for scientific
-publications
+Adding the `+ theme_arpc()` function applies the ARPC theme.
 
 ``` r
-# Basic theme
-ggplot(data, aes(x, y, color = group)) +
-  geom_point() +
+# Load the arpctheme package
+library(arpctheme)
+# Apply the ARPC theme
+ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl))) +
+  geom_point(size = 2) +
+  labs(title = "ARPC Themed ggplot",
+       x = "Weight (1000 lbs)", 
+       y = "Miles per Gallon",
+       color = "Cylinders") +
   theme_arpc()
-
-# Customize font size
-ggplot(data, aes(x, y)) +
-  geom_point() +
-  theme_arpc(base_size = 14)
 ```
 
-### `logo()`
+<img src="man/figures/README-example-theme-1.png" width="100%" /> \###
+Adding a Logo
 
-Add the ARPC logo to your plots with flexible positioning and automatic
-clipping:
+Further, an ARPC logo can be added using `+ logo()`. The logo will
+automatically be placed in the bottom right corner of the plot, but can
+be customized to appear in other locations. The logo position can be
+changes by specifying the `position` argument, which can be set to one
+of the following: “bottom-right”, “bottom-left”, “top-right”,
+“top-left”, “bottom”, “top”, “left”, or “right”. These text based
+position arguments will often end up leaving you disappointed with the
+placement of the logo. In such case, the logo can also be placed in a
+specific location using coordinates, where (0,0) is the bottom left
+corner of the plot and (1,1) is the top right corner. Setting
+coordinates outside the 0 to 1 range is also possible and will place the
+logo into the margins of the plot. The size of the logo can be adjusted
+using the `size` argument, which defaults to 0.3.
 
 ``` r
-# Default position (bottom-right) with automatic clipping
-+ logo()
 
-# Custom position and size (default size is now 0.3)
-+ logo(position = "top-left", size = 0.15, alpha = 0.8)
-
-# Available positions: "bottom-right", "bottom-left", "top-right", 
-# "top-left", "bottom", "top", "left", "right"
-
-# Custom coordinates for precise positioning (0-1 = plot area, >1/<0 = margins)
-+ logo(position = c(1.1, 0.5), size = 0.12)  # Right margin, center
+# Add the ARPC logo to the plot
+ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl))) +
+  geom_point(size = 2) +
+  labs(title = "ARPC Themed ggplot with Logo",
+       x = "Weight (1000 lbs)", 
+       y = "Miles per Gallon",
+       color = "Cylinders") +
+  theme_arpc() +
+  logo()
 ```
 
-**Note**: The logo function automatically handles
-`coord_cartesian(clip = 'off')` so logos can appear in margin areas
-without additional setup.
-
-### `export_arpc()`
-
-Export plots with consistent, publication-ready formatting:
+<img src="man/figures/README-example-logo-1.png" width="100%" />
+Example: place the logo in the upper right hand corner and increase the
+size.
 
 ``` r
-# Export as PNG
-export_arpc(plot, "filename", format = "png", width = 8, height = 6)
-
-# Export as PDF for publications
-export_arpc(plot, "filename", format = "pdf", width = 10, height = 8)
-
-# High-resolution for presentations
-export_arpc(plot, "filename", dpi = 600)
+# Add the ARPC logo to the plot
+ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl))) +
+  geom_point(size = 2) +
+  labs(title = "ARPC Themed ggplot with Logo",
+       x = "Weight (1000 lbs)", 
+       y = "Miles per Gallon",
+       color = "Cylinders") +
+  theme_arpc() +
+  logo(position = c(.75,1.05), size = 0.5)
 ```
+
+<img src="man/figures/README-example-logo2-1.png" width="100%" />
 
 ## NDSU Color System
 
@@ -140,59 +130,18 @@ ndsu_colors(c("green", "yellow", "rust"))
 #> "#00583d" "#FFC425" "#B83E27"
 ```
 
-### Color Priority Demonstration
-
-``` r
-# Create data with 4+ groups to show priority order
-test_data <- data.frame(
-  x = rep(1:5, 4),
-  y = c(rnorm(5, 10), rnorm(5, 15), rnorm(5, 20), rnorm(5, 25)),
-  group = rep(c("First (Green)", "Second (Yellow)", "Third (Rust)", "Fourth (Night)"), each = 5)
-)
-
-ggplot(test_data, aes(x = x, y = y, color = group)) +
-  geom_point(size = 3) +
-  geom_line(linewidth = 1.1) +
-  theme_arpc() +
-  labs(
-    title = "NDSU Color Priority System",
-    subtitle = "Colors applied in order: Green → Yellow → Rust → Night",
-    x = "X Variable",
-    y = "Y Variable", 
-    color = "Priority Order"
-  )
-```
-
-<img src="man/figures/README-color-priority-demo-1.png" width="100%" />
-
-### Manual Color Scales
-
-While `theme_arpc()` automatically applies NDSU colors, you can also use
-the color scales independently:
-
-``` r
-# Use NDSU colors without the full theme
-ggplot(data, aes(x, y, color = group)) +
-  geom_point() +
-  scale_color_ndsu() +
-  theme_minimal()
-
-# Different color palettes
-+ scale_color_ndsu(palette = "greens")  # Green variants only
-+ scale_fill_ndsu(palette = "primary")  # Full primary palette
-```
-
 ## Examples
 
 ### Time Series Plot
 
 ``` r
-# Sample agricultural data
+# some made up data
 crop_data <- data.frame(
   year = rep(2020:2024, 3),
   yield = c(85, 88, 92, 89, 94,   # Corn
            45, 48, 52, 50, 55,    # Soybeans  
            65, 68, 71, 69, 75),   # Wheat
+      
   crop = rep(c("Corn", "Soybeans", "Wheat"), each = 5)
 )
 
@@ -200,10 +149,10 @@ ggplot(crop_data, aes(x = year, y = yield, color = crop)) +
   geom_line(linewidth = 1.2) +
   geom_point(size = 2.5) +
   theme_arpc() +
-  logo(position = "bottom-right", size = 0.08) +
+  logo(position = c(.5,.5), size = 1, alpha = .3) +
   labs(
-    title = "Agricultural Crop Yields Over Time",
-    subtitle = "NDSU Agricultural Research - 2020-2024",
+    title = "Made Up Crop Yields Over Time",
+    subtitle = "",
     x = "Year", 
     y = "Yield (bushels/acre)",
     color = "Crop Type"

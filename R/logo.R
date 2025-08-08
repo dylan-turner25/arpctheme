@@ -17,7 +17,8 @@
 #' @export
 #' @import ggplot2
 #' @importFrom grid unit rectGrob gpar gTree gList viewport rasterGrob
-#' @importFrom magick image_read image_convert image_info
+#' @importFrom png readPNG
+#' @importFrom tools file_ext
 #'
 #' @examples
 #' library(ggplot2)
@@ -86,14 +87,20 @@ logo <- function(position = "bottom-right",
   
   # Determine logo path
   if (is.null(path)) {
-    # Try to find package logo in inst directory
+    # Try to find package logo in inst directory (prefer PNG over PDF)
     pkg_dir <- system.file(package = "arpctheme")
     if (pkg_dir != "") {
       # Package is installed - logo is in inst directory
-      logo_path <- system.file("arpc_logo.pdf", package = "arpctheme")
+      logo_path <- system.file("arpc_logo.png", package = "arpctheme")
+      if (!file.exists(logo_path)) {
+        logo_path <- system.file("arpc_logo.pdf", package = "arpctheme")
+      }
     } else {
       # Development mode - look in inst directory
-      logo_path <- file.path("inst", "arpc_logo.pdf")
+      logo_path <- file.path("inst", "arpc_logo.png")
+      if (!file.exists(logo_path)) {
+        logo_path <- file.path("inst", "arpc_logo.pdf")
+      }
     }
   } else {
     logo_path <- path
@@ -147,7 +154,8 @@ logo <- function(position = "bottom-right",
 #' @param logo_path Character, path to logo file for aspect ratio calculation
 #' @return List with xmin, xmax, ymin, ymax coordinates
 #' @keywords internal
-#' @importFrom magick image_read image_info
+#' @importFrom png readPNG
+#' @importFrom tools file_ext
 calculate_logo_coordinates <- function(position, size, logo_path = NULL) {
   
   # Determine base coordinates
@@ -175,8 +183,16 @@ calculate_logo_coordinates <- function(position, size, logo_path = NULL) {
   aspect_ratio <- 1  # Default to square
   if (!is.null(logo_path) && file.exists(logo_path)) {
     tryCatch({
-      img_info <- magick::image_info(magick::image_read(logo_path))
-      aspect_ratio <- img_info$width / img_info$height
+      if (tolower(tools::file_ext(logo_path)) == "png") {
+        # For PNG files, get dimensions from file header
+        img_data <- png::readPNG(logo_path, native = TRUE, info = TRUE)
+        img_info <- attr(img_data, "info")
+        aspect_ratio <- img_info$dim[1] / img_info$dim[2]  # width / height (native aspect ratio)
+      } else {
+        # For PDF files, use a reasonable default aspect ratio
+        # Most logos are wider than tall, so use 1.5:1 ratio
+        aspect_ratio <- 1.5
+      }
     }, error = function(e) {
       # If we can't read the image, use default aspect ratio
       aspect_ratio <<- 1
@@ -213,8 +229,9 @@ calculate_logo_coordinates <- function(position, size, logo_path = NULL) {
 #' @param alpha Numeric, transparency level
 #' @return A grob object
 #' @keywords internal
-#' @importFrom grid gTree gList rasterGrob rectGrob viewport unit gpar
-#' @importFrom magick image_read image_convert
+#' @importFrom grid gTree gList rasterGrob rectGrob viewport unit gpar textGrob
+#' @importFrom png readPNG
+#' @importFrom tools file_ext
 create_logo_grob <- function(logo_path, coords, alpha) {
   
   if (is.null(logo_path)) {
@@ -234,19 +251,33 @@ create_logo_grob <- function(logo_path, coords, alpha) {
   } else {
     # Try to load the actual logo
     tryCatch({
-      # Read the PDF and convert to raster
-      img <- magick::image_read(logo_path, density = 300)
-      img_raster <- as.raster(magick::image_convert(img, "png"))
-      
-      # Create raster grob from the actual logo
-      logo_element <- grid::rasterGrob(
-        image = img_raster,
-        x = unit(coords$xmin + (coords$xmax - coords$xmin)/2, "npc"),
-        y = unit(coords$ymin + (coords$ymax - coords$ymin)/2, "npc"),
-        width = unit(coords$xmax - coords$xmin, "npc"),
-        height = unit(coords$ymax - coords$ymin, "npc"),
-        interpolate = TRUE
-      )
+      if (tolower(tools::file_ext(logo_path)) == "png") {
+        # Read PNG file directly
+        img_raster <- png::readPNG(logo_path)
+        
+        # Create raster grob from the actual logo
+        logo_element <- grid::rasterGrob(
+          image = img_raster,
+          x = unit(coords$xmin + (coords$xmax - coords$xmin)/2, "npc"),
+          y = unit(coords$ymin + (coords$ymax - coords$ymin)/2, "npc"),
+          width = unit(coords$xmax - coords$xmin, "npc"),
+          height = unit(coords$ymax - coords$ymin, "npc"),
+          interpolate = TRUE
+        )
+      } else {
+        # For non-PNG files (like PDF), create a text placeholder
+        warning("Non-PNG logo files no longer supported. Convert to PNG format.")
+        logo_element <- grid::textGrob(
+          label = "ARPC\nLOGO",
+          x = unit(coords$xmin + (coords$xmax - coords$xmin)/2, "npc"),
+          y = unit(coords$ymin + (coords$ymax - coords$ymin)/2, "npc"),
+          gp = grid::gpar(
+            fontsize = 12,
+            fontface = "bold",
+            col = rgb(0, 0, 0, alpha)
+          )
+        )
+      }
     }, error = function(e) {
       warning("Failed to load logo image: ", e$message, ". Using placeholder.")
       # Fall back to placeholder if image loading fails
