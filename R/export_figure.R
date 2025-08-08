@@ -2,22 +2,21 @@
 #'
 #' This function provides a standardized way to export ggplot2 figures with
 #' consistent dimensions, resolution, and formatting options suitable for
-#' ARPC publications and presentations.
+#' ARPC publications and presentations. Automatically exports PNG, PDF, and EPS versions.
 #'
 #' @param plot A ggplot2 plot object to export
-#' @param filename Character string specifying the output filename (without extension)
+#' @param filename Character string specifying the base filename (without extension)
 #' @param path Character string specifying the directory path (default: current directory)
-#' @param format Character string specifying output format: "png", "pdf", "svg", or "eps" (default: "png")
 #' @param width Numeric value for plot width in inches (default: 8)
 #' @param height Numeric value for plot height in inches (default: 6)
 #' @param dpi Numeric value for resolution in dots per inch (default: 300)
-#' @param units Character string for units: "in", "cm", or "mm" (default: "in")
 #' @param bg Background color (default: "white")
+#' @param plot_data Optional data.frame to export as CSV file alongside the figures
 #' @param device_args Named list of additional arguments to pass to the graphics device
 #'
-#' @return Invisibly returns the full path to the saved file
+#' @return Invisibly returns a list of full paths to all saved files
 #' @export
-#' @importFrom grDevices dev.off pdf png svg
+#' @importFrom utils write.csv
 #' @import ggplot2
 #'
 #' @examples
@@ -26,20 +25,19 @@
 #'   geom_point() +
 #'   theme_arpc()
 #' 
-#' # Export as PNG with default settings
+#' # Export all formats with default settings
 #' export_arpc(p, "my_plot")
 #' 
-#' # Export as PDF with custom dimensions
-#' export_arpc(p, "my_plot", format = "pdf", width = 10, height = 8)
+#' # Export with custom dimensions and include data
+#' export_arpc(p, "my_plot", width = 10, height = 8, plot_data = mtcars)
 export_arpc <- function(plot,
                         filename,
                         path = ".",
-                        format = c("png", "pdf", "svg", "eps"),
                         width = 8,
                         height = 6,
                         dpi = 300,
-                        units = "in",
                         bg = "white",
+                        plot_data = NULL,
                         device_args = list()) {
   
   # Input validation
@@ -51,57 +49,65 @@ export_arpc <- function(plot,
     stop("filename is required")
   }
   
-  format <- match.arg(format)
-  
-  # Construct full file path
+  # Construct directory path
   if (!dir.exists(path)) {
     dir.create(path, recursive = TRUE)
   }
   
-  full_filename <- file.path(path, paste0(filename, ".", format))
+  # Apply CMR font to the plot
+  cmr_font <- get_computer_modern_font()
+  plot_with_font <- plot + theme(text = element_text(family = cmr_font))
   
-  # Set up device-specific arguments
-  base_args <- list(
-    filename = full_filename,
-    width = width,
-    height = height,
-    bg = bg
-  )
+  # Define formats to export
+  formats <- c("png", "pdf", "eps")
+  exported_files <- character(0)
   
-  # Add format-specific arguments
-  if (format %in% c("png", "svg")) {
-    base_args$units <- units
+  # Export each format using ggsave
+  for (format in formats) {
+    full_filename <- file.path(path, paste0(filename, ".", format))
+    
+    # Set up ggsave arguments
+    ggsave_args <- list(
+      filename = full_filename,
+      plot = plot_with_font,
+      width = width,
+      height = height,
+      units = "in",
+      bg = bg
+    )
+    
+    # Add format-specific arguments
     if (format == "png") {
-      base_args$res <- dpi
+      ggsave_args$dpi <- dpi
+    } else if (format == "eps") {
+      ggsave_args$device <- "eps"
     }
+    
+    # Merge with user-specified device arguments
+    final_args <- modifyList(ggsave_args, device_args)
+    
+    # Save using ggsave
+    do.call(ggsave, final_args)
+    
+    # Add to exported files list
+    exported_files <- c(exported_files, full_filename)
+    
+    # Print progress message
+    message("Exported: ", basename(full_filename))
   }
   
-  # Merge with user-specified device arguments
-  final_args <- modifyList(base_args, device_args)
-  
-  # Open graphics device
-  if (format == "png") {
-    do.call(png, final_args)
-  } else if (format == "pdf") {
-    do.call(pdf, final_args)
-  } else if (format == "svg") {
-    do.call(svg, final_args)
-  } else if (format == "eps") {
-    # EPS requires postscript device
-    final_args$file <- final_args$filename
-    final_args$filename <- NULL
-    final_args$onefile <- FALSE
-    final_args$horizontal <- FALSE
-    final_args$paper <- "special"
-    do.call(postscript, final_args)
+  # Export plot data if provided
+  if (!is.null(plot_data)) {
+    if (!is.data.frame(plot_data)) {
+      stop("plot_data must be a data.frame")
+    }
+    
+    csv_filename <- file.path(path, paste0(filename, ".csv"))
+    write.csv(plot_data, csv_filename, row.names = FALSE)
+    exported_files <- c(exported_files, csv_filename)
+    message("Exported: ", basename(csv_filename))
   }
   
-  # Print the plot
-  print(plot)
-  
-  # Close the device
-  dev.off()
-  
-  # Return the full path invisibly
-  invisible(full_filename)
+  # Return all exported file paths invisibly
+  invisible(exported_files)
 }

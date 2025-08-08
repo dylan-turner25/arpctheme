@@ -56,8 +56,9 @@ ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl))) +
   theme_arpc()
 ```
 
-<img src="man/figures/README-example-theme-1.png" width="100%" /> \###
-Adding a Logo
+<img src="man/figures/README-example-theme-1.png" width="100%" />
+
+### Adding an ARPC Logo
 
 Further, an ARPC logo can be added using `+ logo()`. The logo will
 automatically be placed in the bottom right corner of the plot, but can
@@ -108,6 +109,10 @@ ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl))) +
 
 Example: Use the logo as a watermark in the background of the plot.
 
+**Note** the transparency of the logo does not seem to be preserved in
+rendered R markdown documents. Exporting as a png will preserve the
+transparency though.
+
 ``` r
 # some made up data
 crop_data <- data.frame(
@@ -135,6 +140,63 @@ ggplot(crop_data, aes(x = year, y = yield, color = crop)) +
 ```
 
 <img src="man/figures/README-timeseries-example-1.png" width="100%" />
+
+## Exporting Figures
+
+The `export_arpc()` function provides a standardized way to export
+high-quality figures suitable for publications and presentations. It
+automatically exports your plots in multiple formats (PNG, PDF, and EPS)
+with Computer Modern Roman (CMR) font applied.
+
+### Basic Usage
+
+``` r
+# Create a plot
+p <- ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl))) +
+  geom_point(size = 2) +
+  labs(title = "Car Weight vs MPG",
+       x = "Weight (1000 lbs)", 
+       y = "Miles per Gallon",
+       color = "Cylinders") +
+  theme_arpc() +
+  logo()
+
+# Export in all formats (creates my_plot.png, my_plot.pdf, my_plot.eps)
+export_arpc(p, "my_plot")
+```
+
+### Custom Dimensions and Path
+
+``` r
+# Export with custom dimensions to a specific folder
+export_arpc(p, "figure1", 
+            path = "figures/",
+            width = 10, 
+            height = 6,
+            dpi = 300)
+```
+
+### Including Data Export
+
+The function can also export the underlying data as a CSV file alongside
+the figures if you pass the dataframe with the plot data to the
+`plot_data` argument. This is useful for sharing both the visualizations
+and the data used to create them or referencing the underlying data
+values of the figures when writing accompanying manuscript text or
+quickly calculating one-off statistics.
+
+``` r
+# Export figures and data together
+export_arpc(p, "analysis_results", 
+            plot_data = mtcars,
+            path = "output/")
+
+# This creates:
+# - analysis_results.png
+# - analysis_results.pdf  
+# - analysis_results.eps
+# - analysis_results.csv
+```
 
 ## NDSU Color Pallete
 
