@@ -7,7 +7,7 @@
 calculate_logo_coordinates(position, size, logo_path = NULL)
 }
 \arguments{
-\item{position}{Character, logo position}
+\item{position}{Character or numeric vector, logo position}
 
 \item{size}{Numeric, logo size as proportion}
 

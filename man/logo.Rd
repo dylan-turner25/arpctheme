@@ -4,29 +4,32 @@
 \alias{logo}
 \title{Add ARPC Logo to ggplot}
 \usage{
-logo(position = "bottom-right", size = 0.1, path = NULL, alpha = 0.8)
+logo(position = "bottom-right", size = 0.3, path = NULL, alpha = 0.8)
 }
 \arguments{
-\item{position}{Character, position of logo. Options: "bottom-right", "bottom-left",
-"top-right", "top-left", "bottom", "top", "left", "right" (default: "bottom-right")}
+\item{position}{Character or numeric vector, position of logo.
+Character options: "bottom-right", "bottom-left", "top-right", "top-left",
+"bottom", "top", "left", "right" (default: "bottom-right") - predefined positions.
+Numeric option: c(x, y) coordinates in normalized units (0-1 = plot area,1 or <0 = margin areas, e.g., c(1.1, 0.5) for right margin)}
 
-\item{size}{Numeric, size of logo as proportion of plot area (default: 0.1)}
+\item{size}{Numeric, size of logo as proportion of plot area (default: 0.3)}
 
 \item{path}{Character, path to logo file. If NULL, uses package default logo (default: NULL)}
 
 \item{alpha}{Numeric, transparency of logo (0 = transparent, 1 = opaque) (default: 0.8)}
 }
 \value{
-A ggplot2 annotation layer that can be added with +
+A special logo object that automatically adds both annotation and coordinate system
 }
 \description{
-Adds the ARPC logo to a ggplot object. This function returns a ggplot2 layer
-that can be added to any ggplot using the + operator.
+Adds the ARPC logo to a ggplot object. This function returns a special object
+that automatically handles both the logo annotation and coordinate clipping
+when added to any ggplot using the + operator.
 }
 \examples{
 library(ggplot2)
 
-# Add logo to bottom-right (default)
+# Add logo to bottom-right (default) - automatic clipping handling
 ggplot(mtcars, aes(x = wt, y = mpg)) +
   geom_point() +
   theme_arpc() +
@@ -43,4 +46,10 @@ ggplot(mtcars, aes(x = wt, y = mpg)) +
   geom_point() +
   theme_arpc() +
   logo(position = "top-right", size = 0.15, alpha = 0.6)
+  
+# Use custom coordinates - 0-1 is plot area, outside is margins
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point() +
+  theme_arpc() +
+  logo(position = c(1.1, 0.5), size = 0.08)  # Right margin, vertically centered
 }

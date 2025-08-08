@@ -1,17 +1,19 @@
 #' Add ARPC Logo to ggplot
 #'
-#' Adds the ARPC logo to a ggplot object. This function returns a ggplot2 layer
-#' that can be added to any ggplot using the + operator.
+#' Adds the ARPC logo to a ggplot object. This function returns a special object
+#' that automatically handles both the logo annotation and coordinate clipping
+#' when added to any ggplot using the + operator.
 #'
 #' @param position Character or numeric vector, position of logo. 
 #'   Character options: "bottom-right", "bottom-left", "top-right", "top-left", 
-#'   "bottom", "top", "left", "right" (default: "bottom-right"). 
-#'   Numeric option: c(x, y) coordinates where x and y are in plot units
-#' @param size Numeric, size of logo as proportion of plot area (default: 0.1)
+#'   "bottom", "top", "left", "right" (default: "bottom-right") - predefined positions. 
+#'   Numeric option: c(x, y) coordinates in normalized units (0-1 = plot area, 
+#'   >1 or <0 = margin areas, e.g., c(1.1, 0.5) for right margin)
+#' @param size Numeric, size of logo as proportion of plot area (default: 0.3)
 #' @param path Character, path to logo file. If NULL, uses package default logo (default: NULL)
 #' @param alpha Numeric, transparency of logo (0 = transparent, 1 = opaque) (default: 0.8)
 #'
-#' @return A ggplot2 annotation layer that can be added with +
+#' @return A special logo object that automatically adds both annotation and coordinate system
 #' @export
 #' @import ggplot2
 #' @importFrom grid unit rectGrob gpar gTree gList viewport rasterGrob
@@ -20,7 +22,7 @@
 #' @examples
 #' library(ggplot2)
 #' 
-#' # Add logo to bottom-right (default)
+#' # Add logo to bottom-right (default) - automatic clipping handling
 #' ggplot(mtcars, aes(x = wt, y = mpg)) +
 #'   geom_point() +
 #'   theme_arpc() +
@@ -38,13 +40,13 @@
 #'   theme_arpc() +
 #'   logo(position = "top-right", size = 0.15, alpha = 0.6)
 #'   
-#' # Use custom x,y coordinates for precise positioning
+#' # Use custom coordinates - 0-1 is plot area, outside is margins
 #' ggplot(mtcars, aes(x = wt, y = mpg)) +
 #'   geom_point() +
 #'   theme_arpc() +
-#'   logo(position = c(3, 25), size = 0.12)
+#'   logo(position = c(1.1, 0.5), size = 0.08)  # Right margin, vertically centered
 logo <- function(position = "bottom-right", 
-                 size = 0.1, 
+                 size = 0.3, 
                  path = NULL, 
                  alpha = 0.8) {
   
@@ -106,16 +108,29 @@ logo <- function(position = "bottom-right",
   # Calculate logo coordinates based on position, preserving aspect ratio
   coords <- calculate_logo_coordinates(position, size, logo_path)
   
-  # Create the annotation using a different approach
+  # No longer need clipping warnings - handled automatically
+  
+  # Create the annotation with automatic clipping support
   tryCatch({
     # Create the logo grob
     logo_grob <- create_logo_grob(logo_path, coords, alpha)
     
-    annotation_custom(
+    # Create annotation
+    annotation <- annotation_custom(
       grob = logo_grob,
       xmin = -Inf, xmax = Inf,
       ymin = -Inf, ymax = Inf
     )
+    
+    # Return both annotation and coordinate system as a special object
+    logo_layers <- list(
+      annotation = annotation,
+      coord = coord_cartesian(clip = 'off')
+    )
+    
+    class(logo_layers) <- "arpc_logo_layers"
+    return(logo_layers)
+    
   }, error = function(e) {
     warning("Failed to create logo annotation: ", e$message)
     return(NULL)
@@ -137,16 +152,16 @@ calculate_logo_coordinates <- function(position, size, logo_path = NULL) {
   
   # Determine base coordinates
   if (is.character(position)) {
-    # Use predefined string positions
+    # Use predefined string positions at plot edges
     base_coords <- switch(position,
-      "bottom-right" = list(x = 0.85, y = 0.08),
-      "bottom-left" = list(x = 0.15, y = 0.08),
-      "top-right" = list(x = 0.85, y = 0.92),
-      "top-left" = list(x = 0.15, y = 0.92),
-      "bottom" = list(x = 0.5, y = 0.08),
-      "top" = list(x = 0.5, y = 0.92),
-      "left" = list(x = 0.15, y = 0.5),
-      "right" = list(x = 0.85, y = 0.5)
+      "bottom-right" = list(x = 0.8, y = -0.1),     # Lower-right plot edge
+      "bottom-left" = list(x = 0.2, y = -0.1),      # Lower-left plot edge
+      "top-right" = list(x = 0.8, y = 1.0),        # Upper-right plot edge
+      "top-left" = list(x = 0.2, y = 1.0),         # Upper-left plot edge
+      "bottom" = list(x = 0.5, y = 0.0),           # Bottom edge center
+      "top" = list(x = 0.5, y = 1.0),              # Top edge center
+      "left" = list(x = 0.0, y = 0.5),             # Left edge center
+      "right" = list(x = 1.0, y = 0.5)             # Right edge center
     )
   } else if (is.numeric(position) && length(position) == 2) {
     # Use custom x,y coordinates
@@ -179,17 +194,11 @@ calculate_logo_coordinates <- function(position, size, logo_path = NULL) {
     logo_height <- size
   }
   
-  # Calculate bounds
+  # Calculate bounds (no clamping - allows margin positioning)
   xmin <- base_coords$x - logo_width / 2
   xmax <- base_coords$x + logo_width / 2
   ymin <- base_coords$y - logo_height / 2
   ymax <- base_coords$y + logo_height / 2
-  
-  # Ensure logo stays within plot bounds
-  xmin <- max(0.01, xmin)
-  xmax <- min(0.99, xmax)
-  ymin <- max(0.01, ymin)
-  ymax <- min(0.99, ymax)
   
   list(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax)
 }
@@ -261,4 +270,21 @@ create_logo_grob <- function(logo_path, coords, alpha) {
     children = grid::gList(logo_element),
     vp = grid::viewport(clip = "off")
   )
+}
+
+#' ggplot2 S3 Method for Logo Layers
+#'
+#' This S3 method allows the logo function to automatically add both the 
+#' annotation layer and coord_cartesian(clip = 'off') to ggplot objects.
+#' Users can simply use + logo() without needing to manually add coord_cartesian.
+#'
+#' @param object The arpc_logo_layers object returned by logo()
+#' @param plot The ggplot object to add layers to
+#' @param object_name Not used
+#' @return The modified ggplot object with both annotation and coordinate system
+#' @export
+#' @method ggplot_add arpc_logo_layers
+ggplot_add.arpc_logo_layers <- function(object, plot, object_name) {
+  # Add both the annotation and coordinate system to the plot
+  plot + object$annotation + object$coord
 }

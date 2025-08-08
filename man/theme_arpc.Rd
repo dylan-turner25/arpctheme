@@ -6,7 +6,7 @@
 \usage{
 theme_arpc(
   base_size = 11,
-  base_family = "",
+  base_family = NULL,
   base_line_size = base_size/22,
   base_rect_size = base_size/22
 )
@@ -14,7 +14,7 @@ theme_arpc(
 \arguments{
 \item{base_size}{Base font size (default: 11)}
 
-\item{base_family}{Base font family (default: "")}
+\item{base_family}{Base font family (default: Computer Modern Roman via extrafont)}
 
 \item{base_line_size}{Base line size (default: base_size/22)}
 

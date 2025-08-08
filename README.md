@@ -26,8 +26,8 @@ pak::pak("dylan-turner25/ARPC-Theme")
   Modern Roman typography
 - **NDSU Brand Colors**: Automatic application of official NDSU color
   palette
-- **Logo Integration**: Easy addition of ARPC logo with proper aspect
-  ratio and positioning
+- **Logo Integration**: Easy addition of ARPC logo with automatic
+  clipping and smart positioning
 - **Export Functions**: Standardized figure export with consistent
   formatting
 - **Color Priority System**: Intelligent color assignment (Green →
@@ -39,10 +39,11 @@ pak::pak("dylan-turner25/ARPC-Theme")
 library(arpctheme)
 library(ggplot2)
 
-# Basic usage - theme with automatic NDSU colors
+# Basic usage - theme with automatic NDSU colors and logo
 ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl))) +
   geom_point(size = 2) +
   theme_arpc() +
+  logo() +  # Automatic clipping and positioning
   labs(title = "ARPC Theme with Automatic NDSU Colors",
        x = "Weight (1000 lbs)", 
        y = "Miles per Gallon",
@@ -74,21 +75,26 @@ ggplot(data, aes(x, y)) +
 
 ### `logo()`
 
-Add the ARPC logo to your plots with flexible positioning:
+Add the ARPC logo to your plots with flexible positioning and automatic
+clipping:
 
 ``` r
-# Default position (bottom-right)
+# Default position (bottom-right) with automatic clipping
 + logo()
 
-# Custom position and size
+# Custom position and size (default size is now 0.3)
 + logo(position = "top-left", size = 0.15, alpha = 0.8)
 
 # Available positions: "bottom-right", "bottom-left", "top-right", 
 # "top-left", "bottom", "top", "left", "right"
 
-# Custom coordinates for precise positioning
-+ logo(position = c(1.5, 25), size = 0.12)
+# Custom coordinates for precise positioning (0-1 = plot area, >1/<0 = margins)
++ logo(position = c(1.1, 0.5), size = 0.12)  # Right margin, center
 ```
+
+**Note**: The logo function automatically handles
+`coord_cartesian(clip = 'off')` so logos can appear in margin areas
+without additional setup.
 
 ### `export_arpc()`
 
@@ -212,7 +218,7 @@ ggplot(crop_data, aes(x = year, y = yield, color = crop)) +
 ggplot(mtcars, aes(x = factor(cyl), fill = factor(cyl))) +
   geom_bar() +
   theme_arpc() +
-  logo(position = "top-right", size = 0.5) +
+  logo(position = "bottom-right", size = 0.5) +
   labs(
     title = "Distribution by Cylinder Count",
     x = "Cylinders",
@@ -255,7 +261,8 @@ ggplot(data, aes(x, y)) +
 1.  **Consistent Usage**: Always use `theme_arpc()` for ARPC
     publications to ensure brand consistency
 2.  **Logo Placement**: Choose logo positions that don’t interfere with
-    data visualization
+    data visualization (automatic clipping ensures logos appear
+    correctly)
 3.  **Color Priority**: Let the automatic color system handle color
     assignment for consistency
 4.  **Export Standards**: Use `export_arpc()` with consistent dimensions
